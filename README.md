@@ -35,6 +35,7 @@ print(f"Ponto criado: {ponto}")
 ### 2. Criando Linhas (Creating Line Segments)
 
 **Explicação:**
+
 Uma linha (`LineString`) é uma sequência de pelo menos dois pontos conectados. Representa objetos lineares como ruas, rios ou limites. Em `shapely`, é criada a partir de uma lista de coordenadas `(x, y)` ou pontos.
 
 **Código:**
@@ -54,6 +55,7 @@ print(f"Linha criada: {line}")
 ### 3. Criando Polígonos e Multipolígonos (Creating Polygons and Multipolygons)
 
 **Explicação:**
+
 - **Polígono (`Polygon`)**: Uma área fechada definida por uma borda externa (shell) e opcionalmente bordas internas (holes). O primeiro e o último ponto da sequência devem ser iguais para fechar o anel (ou o Shapely fecha automaticamente).
 - **Multipolígono (`MultiPolygon`)**: Uma coleção de um ou mais polígonos tratados como um único objeto geométrico (ex: um arquipélago, ou um país com ilhas).
 
@@ -82,16 +84,181 @@ print(f"Multipolígono: {mpoly}")
 
 ![Exemplo de Polígono](assets\img\polygon_example.png)
 ---
-### 4. Buffering a Geometry
-### 5. Set Operations on Geometries
-### 6. Area and Perimeter Computation
-### 7. Computing Centroids
-### 8. Enclosing Polygons
-### 9. Creating a Bounding Box
-### 10. Within-test
-### 11. Distance Calculation
-### 12. Simplifying Geometries
-### 13. 3D Objects in Shapely
+### 4. Buffer (Buffering a Geometry)
+
+**Explicação:**
+O buffer cria uma nova geometria que representa todos os pontos dentro de uma determinada distância da geometria original. É muito usado para zonas de influência.
+
+**Código:**
+```python
+from shapely.geometry import Point
+
+p = Point(0, 0)
+buffer_geom = p.buffer(1.0) # Buffer circular de raio 1
+
+print(buffer_geom.area) # Aprox pi * r^2
+```
+
+**Resultado:**
+![Buffer](assets/img/buffer.png)
+
+### 5. Operações de Conjunto (Set Operations on Geometries)
+
+**Explicação:**
+O Shapely permite realizar operações da teoria dos conjuntos entre geometrias, como União, Interseção e Diferença.
+
+**Código:**
+```python
+from shapely.geometry import Polygon
+
+p1 = Polygon([(0,0), (2,0), (2,2), (0,2)])
+p2 = Polygon([(1,1), (3,1), (3,3), (1,3)])
+
+uniao = p1.union(p2)
+interseccao = p1.intersection(p2)
+diferenca = p1.difference(p2)
+```
+
+**Resultado:**
+![Set Operations](assets/img/sets.png)
+
+### 6. Área e Perímetro (Area and Perimeter Computation)
+
+**Explicação:**
+Geometrias como Polígonos possuem propriedades diretas para calcular área (`.area`) e perímetro (`.length`).
+
+**Código:**
+```python
+from shapely.geometry import Polygon
+
+# Triângulo retângulo 3-4-5
+poly = Polygon([(0,0), (4,0), (4,3)])
+
+print(f"Área: {poly.area}") # 6.0
+print(f"Perímetro: {poly.length}") # 12.0
+```
+
+**Resultado:**
+![Area and Perimeter](assets/img/area_perimeter.png)
+
+### 7. Calculando Centróides (Computing Centroids)
+
+**Explicação:**
+O centróide é o centro geométrico de uma figura plana. É um ponto que representa a média aritmética de todos os pontos da forma.
+
+**Código:**
+```python
+from shapely.geometry import Polygon
+
+poly = Polygon([(0,0), (4,0), (4,4), (0,4)])
+centroid = poly.centroid
+
+print(f"Centróide: {centroid}") # POINT (2 2)
+```
+
+**Resultado:**
+![Centroid](assets/img/centroid.png)
+
+### 8. Polígono Envolvente (Enclosing Polygons)
+
+**Explicação:**
+Uma operação comum é encontrar o menor polígono convexo que envolve um conjunto de pontos (Convex Hull).
+
+**Código:**
+```python
+from shapely.geometry import MultiPoint
+
+points = MultiPoint([(0,0), (1,3), (2,2), (4,1), (3,0), (-1,1)])
+hull = points.convex_hull
+```
+
+**Resultado:**
+![Convex Hull](assets/img/convex_hull.png)
+
+### 9. Criando uma Bounding Box (Creating a Bounding Box)
+
+**Explicação:**
+O *Bounding Box* (Envelope) é o menor retângulo alinhado aos eixos x e y que contém a geometria inteira.
+
+**Código:**
+```python
+from shapely.geometry import Polygon
+
+poly = Polygon([(1,1), (2,3), (3,2)])
+minx, miny, maxx, maxy = poly.bounds
+
+bbox = Polygon([(minx, miny), (maxx, miny), (maxx, maxy), (minx, maxy)])
+```
+
+**Resultado:**
+![Bounding Box](assets/img/bbox.png)
+
+### 10. Teste "Contém/Dentro" (Within-test)
+
+**Explicação:**
+Verifica se uma geometria está totalmente dentro de outra (`within`) ou contém outra (`contains`).
+
+**Código:**
+```python
+from shapely.geometry import Point, Polygon
+
+poly = Polygon([(0,0), (4,0), (4,4), (0,4)])
+p_in = Point(2, 2)
+
+print(p_in.within(poly))  # True
+```
+
+**Resultado:**
+![Within Test](assets/img/within.png)
+
+### 11. Cálculo de Distância (Distance Calculation)
+
+**Explicação:**
+Calcula a menor distância Euclidiana (em linha reta) entre duas geometrias.
+
+**Código:**
+```python
+from shapely.geometry import Point
+
+p1 = Point(0, 0)
+p2 = Point(3, 4)
+dist = p1.distance(p2) # 5.0
+```
+
+**Resultado:**
+![Distance](assets/img/distance.png)
+
+### 12. Simplificando Geometrias (Simplifying Geometries)
+
+**Explicação:**
+Reduz o número de vértices de uma geometria mantendo sua forma geral, usando algoritmos como Douglas-Peucker.
+
+**Código:**
+```python
+from shapely.geometry import LineString
+
+line = LineString([(0,0), (1,0.1), (2,-0.1), (3,0), (4,0)])
+simplified = line.simplify(tolerance=0.2, preserve_topology=False)
+```
+
+**Resultado:**
+![Simplifying](assets/img/simplify.png)
+
+### 13. Objetos 3D (3D Objects in Shapely)
+
+**Explicação:**
+O Shapely suporta coordenadas Z, mas a maioria das operações espaciais considera apenas o plano 2D.
+
+**Código:**
+```python
+from shapely.geometry import Point
+
+p3d = Point(1, 2, 3)
+print(p3d.has_z) # True
+```
+
+**Resultado:**
+![3D Objects](assets/img/3d_point.png)
 
 ## PROJETO 2: VECTOR DATA IN PYTHON
 ### 14. Querying the Built-in Datasets in GeoPandas
