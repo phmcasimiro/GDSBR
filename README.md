@@ -262,22 +262,233 @@ print(p3d.has_z) # True
 
 ## PROJETO 2: VECTOR DATA IN PYTHON
 ### 14. Querying the Built-in Datasets in GeoPandas
+
+**Explicação:**
+GeoPandas vem com datasets integrados (como `naturalearth_lowres`) úteis para prototipagem rápida.
+
+**Código:**
+```python
+import geopandas as gpd
+# world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
+# world.plot()
+```
+
+**Resultado:**
+![Built-in](assets/img/gdf_builtin.png)
+
 ### 15. Parsing a Data File into a GeoDataFrame
+
+**Explicação:**
+A função `gpd.read_file()` detecta automaticamente o formato (Shapefile, GeoJSON, etc) e carrega os dados.
+
+**Código:**
+```python
+# gdf = gpd.read_file('dados.shp')
+# gdf.plot()
+```
+
+**Resultado:**
+![Parsing](assets/img/gdf_parsing.png)
+
 ### 16. Creating a GeoDataFrame from Scratch
+
+**Explicação:**
+Você pode criar um GeoDataFrame a partir de um dicionário de dados e uma lista de objetos shapely.
+
+**Código:**
+```python
+d = {'col1': ['name1', 'name2'], 'geometry': [Point(1, 2), Point(2, 1)]}
+gdf = gpd.GeoDataFrame(d, crs="EPSG:4326")
+```
+
+**Resultado:**
+![From Scratch](assets/img/gdf_scratch.png)
+
 ### 17. Creating a GeoDataFrame from a DataFrame
+
+**Explicação:**
+Converta DataFrames comuns contendo Lat/Lon usando `points_from_xy`.
+
+**Código:**
+```python
+df = pd.DataFrame({'lat': [0, 1], 'lon': [1, 0]})
+gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat))
+```
+
+**Resultado:**
+![From DF](assets/img/gdf_from_df.png)
+
 ### 18. Writing a GeoDataFrame to a File
+
+**Explicação:**
+Use `.to_file()` para exportar seus dados espaciais para diversos formatos.
+
+**Código:**
+```python
+# gdf.to_file("output.geojson", driver='GeoJSON')
+```
+
+**Resultado:**
+![Writing](assets/img/gdf_writing.png)
+
 ### 19. Accessing the Geometry Column as a GeoSeries
+
+**Explicação:**
+A coluna de geometria (geralmente chamada `geometry`) pode ser isolada como uma GeoSeries.
+
+**Código:**
+```python
+geo_series = gdf.geometry
+```
+
+**Resultado:**
+![GeoSeries](assets/img/gdf_geoseries.png)
+
 ### 20. Bounds of a GeoSeries
+
+**Explicação:**
+Obtenha os limites `(minx, miny, maxx, maxy)` das geometrias.
+
+**Código:**
+```python
+bounds = gdf.total_bounds
+```
+
+**Resultado:**
+![Bounds](assets/img/gdf_bounds.png)
+
 ### 21. Area and Perimeter Computation
+
+**Explicação:**
+Calcule propriedes geométricas para todas as linhas de uma vez.
+
+**Código:**
+```python
+gdf['area'] = gdf.area
+gdf['perimetro'] = gdf.length
+```
+
+**Resultado:**
+![Area/Perim](assets/img/gdf_area_perimeter.png)
+
 ### 22. Simple Visualization with GeoPandas
+
+**Explicação:**
+O método `.plot()` encapsula o matplotlib para visualização rápida de mapas.
+
+**Código:**
+```python
+gdf.plot()
+```
+
+**Resultado:**
+![Viz](assets/img/gdf_visualization.png)
+
 ### 23. Buffering a GeoDataFrame
+
+**Explicação:**
+Aplica o buffer a cada geometria da série.
+
+**Código:**
+```python
+buffered = gdf.buffer(10)
+```
+
+**Resultado:**
+![Buffer](assets/img/gdf_buffer.png)
+
 ### 24. Spatial Join with GeoPandas
+
+**Explicação:**
+Uma das operações mais poderosas: unir dados baseados em localização.
+
+**Código:**
+```python
+joined = gpd.sjoin(left_df, right_df, op='intersects')
+```
+
+**Resultado:**
+![Spatial Join](assets/img/gdf_sjoin.png)
+
 ### 25. Overlaying GeoDataFrames
+
+**Explicação:**
+Realiza operações de conjunto (union, intersection, difference) topológicas camada x camada.
+
+**Código:**
+```python
+overlay_res = gpd.overlay(df1, df2, how='intersection')
+```
+
+**Resultado:**
+![Overlay](assets/img/gdf_overlay.png)
+
 ### 26. Dissolving Polygons
+
+**Explicação:**
+Funde polígonos que compartilham o mesmo valor em uma coluna específica.
+
+**Código:**
+```python
+dissolved = gdf.dissolve(by='region')
+```
+
+**Resultado:**
+![Dissolve](assets/img/gdf_dissolve.png)
+
 ### 27. Splitting Geometries in a GeoDataFrame
+
+**Explicação:**
+O método `explode` separa multipartes em linhas únicas.
+
+**Código:**
+```python
+exploded = gdf.explode()
+```
+
+**Resultado:**
+![Splitting](assets/img/gdf_splitting.png)
+
 ### 28. Applying Simple Functions on GeoDataFrames
+
+**Explicação:**
+Transformações afins (translação, rotação, escala) podem ser aplicadas diretamente.
+
+**Código:**
+```python
+gdf_translated = gdf.translate(xoff=1.0)
+```
+
+**Resultado:**
+![Functions](assets/img/gdf_functions.png)
+
 ### 29. Generating Random Synthetic Data
+
+**Explicação:**
+Útil para simulações e testes.
+
+**Código:**
+```python
+gdf = gpd.GeoDataFrame(geometry=gpd.points_from_xy(np.random.rand(10), np.random.rand(10)))
+```
+
+**Resultado:**
+![Synthetic](assets/img/gdf_synthetic.png)
+
 ### 30. Counting Points in Polygons
+
+**Explicação:**
+Contagem de pontos dentro de regiões usando Spatial Join.
+
+**Código:**
+```python
+joined = gpd.sjoin(points, polygons, op='within')
+counts = joined.index_right.value_counts()
+```
+
+**Resultado:**
+![Counting](assets/img/gdf_counting.png)
+
 
 
 ## PROJETO 3: VISUALIZING GEOSPATIAL DATA
