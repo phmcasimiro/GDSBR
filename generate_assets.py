@@ -330,7 +330,7 @@ gdf_scratch = gdf_cidades
 # --- 16b. GDF from Scratch (Polygons - Fazenda) ---
 from matplotlib.patches import Patch
 
-fig, ax = plt.subplots(figsize=(8, 6))
+fig, ax = plt.subplots(figsize=(20, 14))
 
 # Criar dados de talhões de uma fazenda
 talhoes_dados = {
