@@ -1,0 +1,11 @@
+{
+    "pythonPath": "/home/phmcasimiro/Documentos/projetos/gds_br/venv/bin/python",
+    "include": [
+        "."
+    ],
+    "exclude": [
+        "**/node_modules",
+        "**/__pycache__",
+        "venv"
+    ]
+}
