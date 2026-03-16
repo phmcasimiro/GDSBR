@@ -4,3 +4,12 @@ __pycache__/
 *.pyc
 .env
 .ipynb_checkpoints/
+
+# Arquivos gerados (Mapas)
+*.png
+*.pdf
+
+# Cópias e backups temporários
+*copy.py
+*backup.py
+*.tmp
