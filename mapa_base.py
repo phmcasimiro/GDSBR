@@ -16,239 +16,274 @@
 #  └──────────────────────┴──────────────────┘
 # =============================================================================
 
-
+# ============================================
 # --- SEÇÃO 1: IMPORTAÇÃO DAS BIBLIOTECAS ---
-import matplotlib.pyplot as plt                # Ferramenta principal para desenhar gráficos e mapas
-from matplotlib.lines import Line2D            # Ferramenta para criar linhas personalizadas (usada na legenda)
-from matplotlib.patches import Patch, Rectangle # 'Patch': áreas coloridas na legenda | 'Rectangle': retângulos
-import geopandas as gpd                        # Ferramenta para trabalhar com dados geográficos (polígonos, malhas)
-import requests                                # Ferramenta para fazer requisições à internet (baixar dados de APIs)
-import io                                      # Ferramenta para tratar dados em memória como se fossem um arquivo
-from shapely.geometry import Point             # Ferramenta para criar geometrias (Ponto, Linha, Polígono)
-from pyproj import Transformer                 # Ferramenta para converter coordenadas entre diferentes projeções
+# ============================================
 
+import matplotlib.pyplot as plt                # Importa a ferramenta principal para criar desenhos, gráficos e mapas
+from matplotlib.gridspec import GridSpec       # Importa a ferramenta de controle absoluto de grade (Layout avançado)
+from matplotlib.lines import Line2D            # Importa uma classe para criar linhas personalizadas nas legendas
+from matplotlib.patches import Patch, Rectangle # Importa ferramentas para desenhar áreas coloridas (Patch) e retângulos (Rectangle)
+import geopandas as gpd                        # Importa a biblioteca especializada em Mapas e Dados Geográficos (GeoDataFrames)
+import requests                                # Importa a biblioteca para fazer "pedidos" de dados para sites e APIs na internet
+import io                                      # Importa uma ferramenta para tratar dados baixados da internet como se fossem arquivos no PC
+from shapely.geometry import Point             # Importa a ferramenta para criar representações matemáticas de "Pontos" geográficos
+from pyproj import Transformer                 # Importa a ferramenta que converte coordenadas (ex: de graus para metros ou vice-versa)
 
+# ===============================================
 # --- SEÇÃO 2: CONFIGURAÇÃO DO ESTILO VISUAL ---
-# O 'try/except' tenta usar um estilo e, se falhar, usa uma alternativa.
+# ===============================================
+
+# O bloco 'try/except' é uma rede de segurança: se o primeiro comando falhar, o código não para e tenta o segundo.
 try:
-    plt.style.use('seaborn-v0_8-whitegrid')  # Estilo seaborn: fundo branco com grade cinza
+    plt.style.use('seaborn-v0_8-whitegrid')  # Tenta aplicar um visual limpo com fundo branco e linhas de grade cinza
 except Exception:
-    plt.style.use('ggplot')                  # Alternativa se o seaborn não estiver disponível
+    plt.style.use('ggplot')                  # Se o estilo acima não existir no seu PC, usa este estilo padrão alternativo
 
-
+# ======================================================================================================
 # --- SEÇÃO 3: DADOS GEOGRÁFICOS E PROJEÇÃO ---
-# Define o ponto central de Brasília e converte para o sistema oficial: SIRGAS 2000 (EPSG:4674).
+# Aqui definimos onde Brasília está no mundo e preparamos a conversão para o formato oficial do Brasil.
+# ======================================================================================================
 
-# Cria um conversor de coordenadas: de GPS (EPSG:4326) → SIRGAS 2000 Brasil (EPSG:4674)
+# Cria uma regra de conversão: transforma de "Graus de GPS" (EPSG:4326) para "SIRGAS 2000" (EPSG:4674 - padrão oficial brasileiro)
 transformer = Transformer.from_crs("EPSG:4326", "EPSG:4674", always_xy=True)
 
-lon, lat = -47.8825, -15.7942               # Longitude e latitude de Brasília (referência: GPS/Google Maps)
-x, y = transformer.transform(lon, lat)       # Converte as coordenadas para o sistema SIRGAS 2000
-ponto_brasilia = Point(x, y)                 # Cria o objeto geométrico "Ponto" com as coordenadas convertidas
+lon, lat = -47.8825, -15.7942               # Define a Longitude e Latitude reais de Brasília (como vemos no Google Maps)
+x, y = transformer.transform(lon, lat)       # Usa a regra de conversão para transformar os números acima no formato SIRGAS 2000
+ponto_brasilia = Point(x, y)                 # Cria um objeto que o computador entende como um "Ponto Geográfico" no mapa
 
-
+# ======================================================================================================
 # --- SEÇÃO 4: BUSCANDO DADOS GEOGRÁFICOS DO IBGE ---
+# Nesta parte, o código vai "telefonar" para o servidor do IBGE e baixar os desenhos dos mapas.
+# ======================================================================================================
 
-# URL da API do IBGE: malha do Distrito Federal (ID 5300108), qualidade máxima
+# Endereço (URL) onde o IBGE guarda o desenho (malha) do Distrito Federal
 url_ibge = "https://servicodados.ibge.gov.br/api/v4/malhas/municipios/5300108?formato=application/vnd.geo+json&qualidade=maxima"
-print("Buscando malha do Distrito Federal no IBGE...")
-response = requests.get(url_ibge)                            # Faz o download dos dados geográficos
-gdf_municipio = gpd.read_file(io.BytesIO(response.content)) # Lê os dados e cria um GeoDataFrame
-gdf_municipio = gdf_municipio.to_crs("EPSG:4674")           # Converte para SIRGAS 2000
+print("Buscando malha do Distrito Federal no IBGE...")       # Mostra uma mensagem no terminal para sabermos o que está acontecendo
+response = requests.get(url_ibge)                            # Vai até o site e baixa os dados (como baixar um arquivo)
+gdf_municipio = gpd.read_file(io.BytesIO(response.content)) # Abre esses dados baixados e os organiza em uma tabela inteligente (DataFrame)
+gdf_municipio = gdf_municipio.to_crs("EPSG:4674")           # Garante que o desenho do mapa esteja no sistema SIRGAS 2000
 
-# URL da API do IBGE: contorno do Brasil com divisão por estados (UFs)
+# Endereço para baixar o contorno de todos os estados do Brasil (UFs)
 url_brasil = "https://servicodados.ibge.gov.br/api/v4/malhas/paises/BR?formato=application/vnd.geo+json&qualidade=intermediaria&intrarregiao=UF"
-print("Buscando contorno do Brasil com UFs no IBGE...")
-response_brasil = requests.get(url_brasil)                               # Faz o download do contorno do Brasil
-gdf_brasil = gpd.read_file(io.BytesIO(response_brasil.content))         # Cria GeoDataFrame com os estados do Brasil
-gdf_brasil = gdf_brasil.set_crs("EPSG:4326", allow_override=True)       # Define o CRS como geográfico
-gdf_municipio_geo = gdf_municipio.to_crs("EPSG:4326")                   # Versão do DF em graus
+print("Buscando contorno do Brasil com UFs no IBGE...")      # Mensagem de progresso
+response_brasil = requests.get(url_brasil)                               # Baixa os dados do contorno do Brasil
+gdf_brasil = gpd.read_file(io.BytesIO(response_brasil.content))         # Transforma os dados do Brasil em uma tabela geográfica
+gdf_brasil = gdf_brasil.set_crs("EPSG:4326", allow_override=True)       # Define que os dados originais estão em formato de graus (GPS)
+gdf_municipio_geo = gdf_municipio.to_crs("EPSG:4326")                   # Cria uma cópia do mapa do DF em formato de graus para o mapa de localização
 
+# --- SEÇÃO 5: DEFINIÇÃO DO LAYOUT DO MAPA (GRIDSPEC) ---
+# Aqui usamos a grade absoluta para ter controle total de cada pixel e espaço.
 
-# --- SEÇÃO 5: DEFINIÇÃO DO LAYOUT DO MAPA (MOSAICO) ---
-# O 'mapa' ocupa toda a coluna esquerda (4 linhas).
-# A coluna direita tem 4 painéis com alturas variadas.
-layout = [
-    ['mapa', 'localizacao'],   # Linha 1: localização à direita
-    ['mapa', 'legenda'],       # Linha 2: legenda à direita
-    ['mapa', 'info_tecnica'],  # Linha 3: informações técnicas à direita
-    ['mapa', 'info_carto'],    # Linha 4: informações cartográficas à direita
-]
+# Cria uma figura (o papel em branco) no tamanho A4 Paisagem (11.69 x 8.27 polegadas)
+fig = plt.figure(figsize=(11.69, 8.27))
 
-# Cria a figura e os eixos
-# height_ratios=[1.875, 0.5, 1.0, 1.0]: Localização 25% mais alta que antes (1.5 -> 1.875)
-fig, axs = plt.subplot_mosaic(
-    layout,
-    figsize=(14, 15),           # Ajustamos a altura para compensar o novo painel mais alto
-    width_ratios=[3, 1],
-    height_ratios=[1.875, 0.5, 1.0, 1.0]
-)
+# Define uma grade de 4 linhas e 4 colunas
+# hspace: espaço vertical entre linhas | wspace: espaço horizontal entre colunas
+# Aumentamos as margens (left, bottom) para os números das coordenadas não sumirem
+gs = GridSpec(4, 4, figure=fig, 
+              hspace=0.02, wspace=0.1, 
+              left=0.07, right=0.98, top=0.95, bottom=0.07,
+              height_ratios=[1.2, 0.8, 1.0, 1.0], # Altura de cada linha
+              width_ratios=[1, 1, 1, 1])          # Largura de cada coluna
 
-ax_mapa        = axs['mapa']
-ax_localizacao = axs['localizacao']
-ax_legenda     = axs['legenda']
-ax_info_tec    = axs['info_tecnica']
-ax_info_carto  = axs['info_carto']
+# Atribui cada painel a uma área da grade:
+# ax_mapa: ocupa da linha 0 até a 4 (todas) e das colunas 0 até a 3 (quase tudo)
+ax_mapa = fig.add_subplot(gs[0:4, 0:3])
 
+# Painéis da Direita (todos na última coluna, index 3):
+ax_localizacao = fig.add_subplot(gs[0, 3]) # Linha 0, Coluna 3
+ax_legenda     = fig.add_subplot(gs[1, 3]) # Linha 1, Coluna 3
+ax_info_tec    = fig.add_subplot(gs[2, 3]) # Linha 2, Coluna 3
+ax_info_carto  = fig.add_subplot(gs[3, 3]) # Linha 3, Coluna 3
 
 # =========================================================================
 # --- SEÇÃO 6: PAINEL PRINCIPAL — MAPA ---
 # =========================================================================
 
-# Desenha a malha municipal do DF
+# Desenha o formato do Distrito Federal no quadradinho principal (ax_mapa)
 gdf_municipio.plot(ax=ax_mapa, color='lightgrey', edgecolor='black', alpha=0.5, label='Distrito Federal')
 
-# Desenha o ponto de Brasília
+# Desenha o pontinho vermelho representando Brasília
 ax_mapa.plot(
-    ponto_brasilia.x, ponto_brasilia.y, 
-    marker='o', color='red', markersize=12, linestyle='None', 
-    label='Brasília (SIRGAS 2000)'
+    ponto_brasilia.x, ponto_brasilia.y,            # Posição X e Y do ponto
+    marker='o', color='red', markersize=12,        # Formato de bola, cor vermelha e tamanho 12
+    linestyle='None', label='Brasília (SIRGAS 2000)' # Sem linha conectando, apenas o ponto
 )
 
-# Anotação de coordenadas
+# Escreve o texto com os números das coordenadas logo acima do ponto de Brasília
 ax_mapa.annotate(
-    f'Lon: {ponto_brasilia.x:.4f}\nLat: {ponto_brasilia.y:.4f}',
-    (ponto_brasilia.x, ponto_brasilia.y),
-    xytext=(10, 10), textcoords='offset points', 
-    fontsize=9, fontweight='bold'
+    f'Lon: {ponto_brasilia.x:.4f}\nLat: {ponto_brasilia.y:.4f}', # O texto (Longitude e Latitude com 4 casas decimais)
+    (ponto_brasilia.x, ponto_brasilia.y),                        # Onde o texto deve apontar
+    xytext=(10, 10), textcoords='offset points',               # Desloca o texto 10 pontos para o lado e para cima
+    fontsize=9, fontweight='bold'                                # Tamanho da letra 9 e em negrito
 )
 
-# Ajuste de zoom
-minx, miny, maxx, maxy = gdf_municipio.total_bounds
-ax_mapa.set_xlim(minx - 0.05, maxx + 0.05)
-ax_mapa.set_ylim(miny - 0.05, maxy + 0.05)
+# Define os limites de visão do mapa (o "zoom") baseado no tamanho do DF, deixando um espacinho em volta
+minx, miny, maxx, maxy = gdf_municipio.total_bounds # Pega as coordenadas mais extremas (norte, sul, leste, oeste)
+ax_mapa.set_xlim(minx - 0.05, maxx + 0.05)           # Define o limite horizontal da câmera
+ax_mapa.set_ylim(miny - 0.05, maxy + 0.05)           # Define o limite vertical da câmera
 
-# Título principal do mapa agora colocado internamente para alinhar com os painéis laterais
-ax_mapa.text(0.5, 0.98, 'Limite do Distrito Federal — SIRGAS 2000', 
-            transform=ax_mapa.transAxes, fontsize=16, fontweight='bold', ha='center', va='top')
-# ax_mapa.set_title('Limite do Distrito Federal — SIRGAS 2000', fontsize=16, fontweight='bold')  # Antigo título externo
-ax_mapa.set_xlabel('Longitude (Graus)')
-ax_mapa.set_ylabel('Latitude (Graus)')
-ax_mapa.grid(True, linestyle='--', alpha=0.6)
+ax_mapa.set_xlabel('Longitude (Graus)')      # Nomeia a linha de baixo do gráfico
+ax_mapa.set_ylabel('Latitude (Graus)')       # Nomeia a linha lateral do gráfico
+ax_mapa.grid(True, linestyle='--', alpha=0.6) # Coloca linhas de grade pontilhadas e meio transparentes
 
+# --- AJUSTE DE ALINHAMENTO E ESTILO (BOUNDBOX) ---
+# Usamos datalim para o quadro preencher a grade e mantemos o mapa interno proporcional
+ax_mapa.set_adjustable('datalim') 
 
 # =========================================================================
 # --- SEÇÃO 7: PAINEL — LOCALIZAÇÃO ---
 # =========================================================================
 
-def _estilizar_painel(ax, titulo, h_rect=0.12, y_text=0.94):
-    """Função auxiliar: aplica bordas e cabeçalho cinza."""
-    for spine in ax.spines.values():
-        spine.set_visible(True)
-        spine.set_linewidth(1)
-    ax.set_xticks([])
-    ax.set_yticks([])
-    # Cabeçalho
+# h_rect = altura do retângulo, y_text = posição do texto
+def _estilizar_painel(ax, titulo, h_rect=0.12, y_text=0.94, esconder_eixos=True, font_size=9):
+    """Função para aplicar o visual didático: bordas e cabeçalho cinza."""
+    for spine in ax.spines.values(): # Percorre as 4 bordas do painel
+        spine.set_visible(True)      # Garante que a borda apareça
+        spine.set_linewidth(1)       # Define a grossura da linha da borda como 1
+        spine.set_edgecolor('grey')  # Define a cor da borda como cinza (didático)
+    
+    if esconder_eixos:
+        ax.set_xticks([])            # Limpa os números da parte de baixo do painel
+        ax.set_yticks([])            # Limpa os números da parte lateral do painel
+    
+    # Desenha o retângulo cinza no topo do painel lateral para ser o "título"
     ax.add_patch(Rectangle(
         (0, 1 - h_rect), 1, h_rect, transform=ax.transAxes, 
         facecolor='lightgrey', edgecolor='lightgrey', clip_on=False
     ))
-    # Título
+    
+    # Escreve o nome do painel centralizado em cima do retângulo cinza
     ax.text(0.5, y_text, titulo, transform=ax.transAxes, 
-            fontsize=9, fontweight='bold', ha='center', va='center')
+            fontsize=font_size, fontweight='bold', ha='center', va='center')
 
-# Estilização com ajuste de altura para o cabeçalho (devido ao height_ratio diferenciado)
+# Estilização do MAPA PRINCIPAL (agora com cabeçalho cinza e eixos visíveis)
+_estilizar_painel(ax_mapa, 'Limite do Distrito Federal — SIRGAS 2000', h_rect=0.045, y_text=0.978, esconder_eixos=False, font_size=12)
+
+# Aplica a função de estilo no painel de "Localização"
 _estilizar_painel(ax_localizacao, "Localização", h_rect=0.1, y_text=0.95)
 
-# Desenha contorno do Brasil e destaca DF
+# Força o painel a preencher todo o espaço da grade
+ax_localizacao.set_adjustable('datalim')
+
+# Desenha o mapa do Brasil completo em cinza no painel de localização
 gdf_brasil.plot(ax=ax_localizacao, color='lightgrey', edgecolor='darkgrey', linewidth=0.5)
+# Desenha apenas o Distrito Federal em vermelho para mostrar onde ele fica dentro do Brasil
 gdf_municipio_geo.plot(ax=ax_localizacao, color='red', edgecolor='red')
 
-# Ajusta os limites do eixo para dar "respiro" ao mapa do Brasil (evita tocar no header/bordas)
-ax_localizacao.set_xlim(-85, -25)   # De -75/-34 para -85/-25 (maior margem horizontal)
-ax_localizacao.set_ylim(-42, 15)    # De -35/6 para -42/15 (maior margem vertical)
-
+# Ajusta a "câmera" para mostrar o Brasil centralizado no painel de localização
+ax_localizacao.set_xlim(-85, -25)   # Define o limite leste-oeste (longitude)
+ax_localizacao.set_ylim(-42, 15)    # Define o limite norte-sul (latitude)
 
 # =========================================================================
 # --- SEÇÃO 8: PAINEL — LEGENDA ---
 # =========================================================================
 
-# Cabeçalho adaptado para a altura reduzida do painel
-_estilizar_painel(ax_legenda, "Legenda", h_rect=0.25, y_text=0.88)
+# Aplica a função de estilo no painel de "Legenda"
+_estilizar_painel(ax_legenda, "Legenda", h_rect=0.12, y_text=0.94)
 
+# Define quais elementos vão aparecer na caixa de legenda (o que cada cor/símbolo significa)
 legend_elements = [
-    Patch(facecolor='lightgrey', edgecolor='black', alpha=0.5, label='DF'),
-    Line2D([0], [0], marker='o', color='w', label='Brasília',
-           markerfacecolor='red', markersize=8, linestyle='None')
+    Patch(facecolor='lightgrey', edgecolor='black', alpha=0.5, label='DF'), # Representa a área do DF
+    Line2D([0], [0], marker='o', color='w', label='Brasília',               # Representa o ponto de Brasília
+           markerfacecolor='red', markersize=8, linestyle='None')           # Define a cor vermelha e tamanho do ponto na legenda
 ]
 
-# Legenda centralizada e compacta
-ax_legenda.legend(
-    handles=legend_elements, loc='center', 
-    fontsize=8, frameon=False, ncol=1
-)
 
+
+ax_legenda.legend(
+    handles=legend_elements,
+    # Para definir a posição da legenda, use as opções: 'best', 'upper right', 'upper left', 'lower left', 
+    # 'lower right', 'right', 'center left', 'center right', 'lower center', 'upper center', 'center'
+    loc='upper left',
+    # (0, 0.82) -> 0 na horizontal (esquerda) e 0.82 na vertical (abaixo da caixa cinza)
+    bbox_to_anchor=(0.0, 0.82), 
+    fontsize=8, 
+    frameon=False, 
+    ncol=1    
+)
 
 # =========================================================================
 # --- SEÇÃO 9: PAINEL — INFORMAÇÕES TÉCNICAS (BRANDING) ---
 # =========================================================================
 
+# Aplica a função de estilo no painel de "Informação Técnica"
 _estilizar_painel(ax_info_tec, "Informação Técnica", h_rect=0.12, y_text=0.94)
 
-# Título e Subtítulo
+# Escreve o texto principal do projeto dentro desse painel
 ax_info_tec.text(0.5, 0.75, "Mapa do Distrito Federal", transform=ax_info_tec.transAxes,
                  fontsize=10, fontweight='bold', ha='center', va='center')
+# Escreve o nome da marca/projeto abaixo do título
 ax_info_tec.text(0.5, 0.65, "GeoDataScience - BR", transform=ax_info_tec.transAxes,
                  fontsize=9, ha='center', va='center')
 
-# Inserindo a Logo
+# Tenta carregar e mostrar uma imagem de logo
 try:
+    # Tenta ler o arquivo de imagem
     logo = plt.imread("assets/img/world-map.png")
-    # Criamos um novo eixo miniatura dentro do painel para a logo
-    ax_logo = ax_info_tec.inset_axes([0.25, 0.1, 0.5, 0.45])
-    ax_logo.imshow(logo)
-    ax_logo.axis('off')
+    # Parâmetros: [Esquerda, Base, Largura, Altura]. Valores de 0 a 1 (ex: 0.4 = 40% da largura do painel)
+    ax_logo = ax_info_tec.inset_axes([0.4, 0.3, 0.2, 0.2]) 
+    # Mostra a imagem
+    ax_logo.imshow(logo)                               
+    # Esconde os números das bordas da imagem
+    ax_logo.axis('off')                                
 except Exception:
+    # Se a imagem não for encontrada, escreve um texto de aviso no lugar
     ax_info_tec.text(0.5, 0.3, "[Logo World Map]", transform=ax_info_tec.transAxes,
                      ha='center', va='center', color='grey')
-
 
 # =========================================================================
 # --- SEÇÃO 10: PAINEL — INFORMAÇÕES CARTOGRÁFICAS ---
 # =========================================================================
 
+# Aplica a função de estilo no painel de informações cartográficas
 _estilizar_painel(ax_info_carto, "Informações Cartográficas", h_rect=0.12, y_text=0.94)
 
-# Texto Técnico transferido para cá
+# Cria o bloco de texto com os dados técnicos do mapa
 texto_tecnico = (
-    "Sistema: SIRGAS 2000 | EPSG: 4674\n"
-    "Projeção: Geográfica\n"
-    "Escala: 1:250.000\n"
-    "Fonte: IBGE, 2024"
+    "Sistema: SIRGAS 2000 | EPSG: 4674\n" # Qual o sistema de medidas usado
+    "Projeção: Geográfica\n"               # Diz que o mapa é "plano" baseado em graus
+    "Escala: 1:250.000\n"                   # Define a proporção de redução do mapa
+    "Fonte: IBGE, 2024"                    # De onde vieram os dados
 )
+# Escreve esse texto no painel, centralizado
 ax_info_carto.text(0.5, 0.82, texto_tecnico, transform=ax_info_carto.transAxes,
                    fontsize=8, ha='center', va='top')
 
-# Seta do Norte (ajustada para baixo)
+# Desenha a "Seta do Norte" (um desenho que aponta para onde fica o Norte)
 ax_info_carto.annotate(
-    'N', xy=(0.5, 0.50), xytext=(0.5, 0.38),
-    arrowprops=dict(facecolor='black', width=2, headwidth=8),
-    ha='center', va='center', fontsize=16, fontweight='bold',
-    xycoords=ax_info_carto.transAxes
+    'N', xy=(0.5, 0.55), xytext=(0.5, 0.35),                     # xy = ponta da seta (0.55), xytext = base/texto (0.35)
+    arrowprops=dict(facecolor='black', width=2, headwidth=8),    # Estilo da seta (preta e grossa)
+    ha='center', va='center', fontsize=16, fontweight='bold',     # Estilo da letra 'N'
+    xycoords=ax_info_carto.transAxes                            # Usa coordenadas do painel (0 a 1)
 )
 
-# Escala Gráfica
-ax_info_carto.plot([0.2, 0.8], [0.22, 0.22], transform=ax_info_carto.transAxes, color='black', lw=2)
-ax_info_carto.plot([0.2, 0.2], [0.18, 0.26], transform=ax_info_carto.transAxes, color='black', lw=1)
-ax_info_carto.plot([0.8, 0.8], [0.18, 0.26], transform=ax_info_carto.transAxes, color='black', lw=1)
-ax_info_carto.text(0.2, 0.12, "0", transform=ax_info_carto.transAxes, ha='center', fontsize=7)
-ax_info_carto.text(0.8, 0.12, "~50 km", transform=ax_info_carto.transAxes, ha='center', fontsize=7, fontweight='bold')
+# LINHA PARA SUBSTITUIR POR UMA ROSA DOS VENTOS (Descomente para usar uma imagem):
+# ax_info_carto.inset_axes([0.4, 0.35, 0.2, 0.2]).imshow(plt.imread("assets/img/rosa_ventos.png")); ax_info_carto.axis('off')
 
+# Desenha a "Escala Gráfica" (aquela réguinha que diz quantos km representa cada pedaço)
+ax_info_carto.plot([0.2, 0.8], [0.22, 0.22], transform=ax_info_carto.transAxes, color='black', lw=2) # Linha horizontal
+ax_info_carto.plot([0.2, 0.2], [0.18, 0.26], transform=ax_info_carto.transAxes, color='black', lw=1) # Tracinho vertical na esquerda
+ax_info_carto.plot([0.8, 0.8], [0.18, 0.26], transform=ax_info_carto.transAxes, color='black', lw=1) # Tracinho vertical na direita
+ax_info_carto.text(0.2, 0.12, "0", transform=ax_info_carto.transAxes, ha='center', fontsize=7)        # Texto "0" de início
+ax_info_carto.text(0.8, 0.12, "~50 km", transform=ax_info_carto.transAxes, ha='center', fontsize=7, fontweight='bold') # Texto comparativo
 
 # =========================================================================
 # --- SEÇÃO 11: FINALIZAÇÃO E EXPORTAÇÃO ---
 # =========================================================================
 
-# Ajusta o layout para ser mais apertado e ocupar melhor o espaço superior
-plt.tight_layout(pad=1.0, rect=[0.01, 0.01, 0.99, 0.99])
+# Ajusta automaticamente os espaços entre todos os painéis para nada ficar sobreposto
+#plt.tight_layout(pad=1.0, rect=[0.01, 0.01, 0.99, 0.99])
 
-# Adiciona moldura negra bem rente às bordas da figura
+# Cria uma moldura (quadro) preta em volta de toda a imagem final para ficar elegante
 fig.patches.extend([
     Rectangle(
-        (0.005, 0.005), 0.99, 0.99,  # Margem de 0.5% apenas
-        fill=False, color='black', lw=2, transform=fig.transFigure, figure=fig
+        (0.005, 0.005), 0.99, 0.99,  # Posiciona o quadro quase na borda total (0.5% de margem)
+        fill=False, color='black', lw=2, transform=fig.transFigure, figure=fig # Linha preta grossa (lw=2)
     )
 ])
 
-plt.savefig('mapa_ibge_sirgas.png', dpi=150)          # Salva o mapa como PNG com 150 DPI de resolução
-print("Mapa 'mapa_ibge_sirgas.png' gerado com sucesso!")  # Confirmação de sucesso no terminal
+plt.savefig('mapa_ibge_sirgas.png', dpi=300)          # Salva todo o trabalho como uma imagem PNG de alta qualidade
+plt.savefig('mapa_ibge_sirgas.pdf')                   # Salva o mapa em formato PDF (vetorial)
+print("Arquivos 'mapa_ibge_sirgas.png' e 'mapa_ibge_sirgas.pdf' gerados com sucesso!")
