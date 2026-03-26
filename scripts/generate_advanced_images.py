@@ -42,11 +42,13 @@ u = p1.union(p2)
 x, y = u.exterior.xy
 ax1.fill(x, y, alpha=0.5, color='purple')
 ax1.set_title('Union')
+
 # Intersection
 i = p1.intersection(p2)
 x, y = i.exterior.xy
 ax2.fill(x, y, alpha=0.5, color='green')
 ax2.set_title('Intersection')
+
 # Difference
 d = p1.difference(p2)
 x, y = d.exterior.xy
