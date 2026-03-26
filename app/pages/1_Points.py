@@ -9,7 +9,9 @@ st.markdown("# 1. Criando um Ponto (Creating a Point)")
 st.markdown("""
 **Explicação:**
 
-Um ponto geométrico (`Point`) representa uma única localização no espaço, definida por coordenadas numéricas (longitude e latitude). Na biblioteca **Shapely**, pontos podem ser criados passando as coordenadas `(x, y)` ou `(longitude, latitude)`, e são a base para construir outras geometrias.
+Um ponto geométrico (`Point`) representa uma única localização no espaço, definida por coordenadas numéricas (longitude e latitude). 
+
+Com a biblioteca **Shapely**, pontos podem ser criados passando as coordenadas `(x, y)` ou `(longitude, latitude)`, e são a base para construir outras geometrias.
 """)
 
 st.markdown("**Código:**")

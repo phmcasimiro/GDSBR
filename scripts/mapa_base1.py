@@ -45,11 +45,11 @@ except Exception:
 # Aqui definimos onde Brasília está no mundo e preparamos a conversão para o formato oficial do Brasil.
 # ======================================================================================================
 
-# Cria uma regra de conversão: transforma de "Graus de GPS" (EPSG:4326) para "SIRGAS 2000" (EPSG:4674 - padrão oficial brasileiro)
+# Cria uma regra de conversão: transforma de "WGS84" (EPSG:4326) para "SIRGAS 2000" (EPSG:4674 - padrão oficial brasileiro)
 transformer = Transformer.from_crs("EPSG:4326", "EPSG:4674", always_xy=True)
 
-lon, lat = -47.8825, -15.7942               # Define a Longitude e Latitude reais de Brasília (como vemos no Google Maps)
-x, y = transformer.transform(lon, lat)       # Usa a regra de conversão para transformar os números acima no formato SIRGAS 2000
+lon, lat = -47.8825, -15.7942               # Define um ponto com a Longitude e Latitude reais de Brasília (como vemos no Google Maps)
+x, y = transformer.transform(lon, lat)       # Usa a regra de conversão para transformar os números acima para o formato SIRGAS 2000
 ponto_brasilia = Point(x, y)                 # Cria um objeto que o computador entende como um "Ponto Geográfico" no mapa
 
 # ======================================================================================================
@@ -251,23 +251,48 @@ texto_tecnico = (
 ax_info_carto.text(0.5, 0.82, texto_tecnico, transform=ax_info_carto.transAxes,
                    fontsize=8, ha='center', va='top')
 
-# Desenha a "Seta do Norte" (um desenho que aponta para onde fica o Norte)
+# -----------------------
+# --- ROSA DOS VENTOS ---
+# -----------------------
+
+'''# Desenha a "Seta do Norte" (um desenho que aponta para onde fica o Norte)
 ax_info_carto.annotate(
     'N', xy=(0.5, 0.55), xytext=(0.5, 0.35),                     # xy = ponta da seta (0.55), xytext = base/texto (0.35)
     arrowprops=dict(facecolor='black', width=2, headwidth=8),    # Estilo da seta (preta e grossa)
-    ha='center', va='center', fontsize=16, fontweight='bold',     # Estilo da letra 'N'
-    xycoords=ax_info_carto.transAxes                            # Usa coordenadas do painel (0 a 1)
-)
+    ha='center', va='center', fontsize=16, fontweight='bold',    # Estilo da letra 'N'
+    xycoords=ax_info_carto.transAxes                             # Usa coordenadas do painel (0 a 1)
+)'''
 
-# LINHA PARA SUBSTITUIR POR UMA ROSA DOS VENTOS (Descomente para usar uma imagem):
-# ax_info_carto.inset_axes([0.4, 0.35, 0.2, 0.2]).imshow(plt.imread("assets/img/rosa_ventos.png")); ax_info_carto.axis('off')
+# Desenha a Rosa dos Ventos
+ax_rosa = ax_info_carto.inset_axes([0.4, 0.35, 0.2, 0.2])
+ax_rosa.imshow(plt.imread("assets/img/RosaVentos.png"))
+ax_rosa.axis('off')
 
-# Desenha a "Escala Gráfica" (aquela réguinha que diz quantos km representa cada pedaço)
-ax_info_carto.plot([0.2, 0.8], [0.22, 0.22], transform=ax_info_carto.transAxes, color='black', lw=2) # Linha horizontal
-ax_info_carto.plot([0.2, 0.2], [0.18, 0.26], transform=ax_info_carto.transAxes, color='black', lw=1) # Tracinho vertical na esquerda
-ax_info_carto.plot([0.8, 0.8], [0.18, 0.26], transform=ax_info_carto.transAxes, color='black', lw=1) # Tracinho vertical na direita
-ax_info_carto.text(0.2, 0.12, "0", transform=ax_info_carto.transAxes, ha='center', fontsize=7)        # Texto "0" de início
-ax_info_carto.text(0.8, 0.12, "~50 km", transform=ax_info_carto.transAxes, ha='center', fontsize=7, fontweight='bold') # Texto comparativo
+# ---------------------------------------------------------
+# --- ESCALA GRÁFICA PROFISSIONAL (Modelo Cartográfico) ---
+# ---------------------------------------------------------
+
+# Desenha uma barra com segmentos alternados (preto/branco)
+for i, x in enumerate([0.2, 0.4, 0.6]):
+    cor = 'black' if i % 2 == 0 else 'white'
+    ax_info_carto.add_patch(Rectangle((x, 0.2), 0.2, 0.03, 
+                                      transform=ax_info_carto.transAxes, facecolor=cor, edgecolor='black', lw=1))
+
+# Tiques e Textos da Escala (0 a 45 km para facilitar divisões de 15km)
+ax_info_carto.text(0.2, 0.12, "0", transform=ax_info_carto.transAxes, ha='center', fontsize=7)
+ax_info_carto.text(0.4, 0.12, "15", transform=ax_info_carto.transAxes, ha='center', fontsize=7)
+ax_info_carto.text(0.6, 0.12, "30", transform=ax_info_carto.transAxes, ha='center', fontsize=7)
+ax_info_carto.text(0.8, 0.12, "45 km", transform=ax_info_carto.transAxes, ha='center', fontsize=7, fontweight='bold')
+
+# --- OUTROS MODELOS DE ESCALA (Exemplos Adicionais) ---
+# OPÇÃO B (Linha Simples):
+# ax_info_carto.plot([0.2, 0.8], [0.22, 0.22], transform=ax_info_carto.transAxes, color='black', lw=2)
+# for x in [0.2, 0.4, 0.6, 0.8]: ax_info_carto.plot([x, x], [0.18, 0.26], transform=ax_info_carto.transAxes, color='black', lw=1)
+
+# OPÇÃO C (Barra com Subdivisão Inicial):
+# ax_info_carto.add_patch(Rectangle((0.2, 0.2), 0.1, 0.03, transform=ax_info_carto.transAxes, facecolor='black'))
+# ax_info_carto.add_patch(Rectangle((0.3, 0.2), 0.5, 0.03, transform=ax_info_carto.transAxes, facecolor='white', edgecolor='black'))
+
 
 # =========================================================================
 # --- SEÇÃO 11: FINALIZAÇÃO E EXPORTAÇÃO ---
@@ -284,6 +309,6 @@ fig.patches.extend([
     )
 ])
 
-plt.savefig('mapa_ibge_sirgas.png', dpi=300)          # Salva todo o trabalho como uma imagem PNG de alta qualidade
-plt.savefig('mapa_ibge_sirgas.pdf')                   # Salva o mapa em formato PDF (vetorial)
-print("Arquivos 'mapa_ibge_sirgas.png' e 'mapa_ibge_sirgas.pdf' gerados com sucesso!")
+plt.savefig('assets/maps/mapa_ibge_sirgas.png', dpi=300)      # Salva na pasta assets/maps como PNG
+plt.savefig('assets/maps/mapa_ibge_sirgas.pdf')               # Salva na pasta assets/maps como PDF
+print("Arquivos salvos em 'assets/maps/' com sucesso!")

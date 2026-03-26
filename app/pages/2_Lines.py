@@ -9,7 +9,11 @@ st.markdown("# 2. Criando Linhas (Creating Line Segments)")
 st.markdown("""
 **Explicação:**
 
-Uma linha (`LineString`) é uma sequência de pelo menos dois pontos conectados. Representa objetos lineares como ruas, rios ou limites. Em `shapely`, é criada a partir de uma lista de coordenadas `(x, y)` ou pontos.
+Uma linha (`LineString`) é formada por pelo menos dois pontos conectados. 
+
+Na Cartografia representa objetos lineares como ruas, rios ou limites. 
+
+Com a biblioteca `shapely`, podemos criar linhas a partir de uma lista de coordenadas `(x, y)` ou pontos.
 """)
 
 st.markdown("**Código:**")

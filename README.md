@@ -6,7 +6,59 @@
 
 ### **PÚBLICO:** _Estudantes, profissionais e entusiastas de Geoprocessamento e Geografia que não sabem programar e que queiram iniciar em programação com linguagem Python para construir projetos de Geotecnologia com as ferramentas mais modernas e aplicadas no Mercado de Trabalho de TI._
 
-## PROJETO 1: INTRODUÇÃO À GEOMETRIAS
+## PROJETO 1: CRIAÇÃO DE LAYOUT PADRÃO PARA MAPEAMENTO
+
+### 1. Criando um Layout Padrão (Creating a Standard Layout)
+
+**Explicação:**
+
+Analistas GIS trabalham com layouts padrão em softwares SIG para reduzir o tempo de produção de mapas. Quando usamos código gastamos tempo preparando um primeiro layout e depois ajustando-o para atender às especificidades do projeto. Contudo, na minha experiência, utilizar código para criar layouts tem se tornado cada vez mais rápido e eficiente com a ajuda das IAs. 
+
+#### Fluxo de Construção do Mapa Estático (`mapa_base.py`)
+
+<div align="center">
+
+```mermaid
+graph TD
+    A[Início] --> B[Importação de Bibliotecas]
+    B --> C["Configuração de Estilo e CRS (SIRGAS 2000)"]
+    C --> D["Requisição de Dados via API (IBGE)"]
+    D --> E["Definição do Layout Dinâmico (GridSpec A4)"]
+    E --> F["Criação dos Subplots (Painéis Específicos)"]
+    G[Plotagem do Mapa Principal] --> H[Estilização Didática e Cabeçalhos]
+    F --> G
+    H --> I["Adição de Elementos (Norte, Escala, Legenda)"]
+    I --> J[Finalização e Exportação Multi-formato]
+    J --> K[Fim]
+```
+
+</div>
+
+
+- Layout Padrão em arquivo .pdf: ***mapa_ibge_sirgas.pdf***
+- Layout Padrão em arquivo .png: ***mapa_ibge_sirgas.png***
+
+## PROJETO 2: MAPA INTERATIVO COM STREAMLIT E FOLIUM
+
+### A Importância de Mapas Interativos (GIS Analysts & Developers)
+
+A transição de mapas estáticos para mapas interativos é um marco fundamental para profissionais de Geotecnologia:
+
+- **Para o Analista GIS:** Mapas interativos permitem uma exploração dinâmica dos dados. Ao contrário de uma imagem fixa, a interatividade possibilita o uso de filtros em tempo real, consultas a atributos via *popups* e a exploração de diferentes escalas de zoom, facilitando a descoberta de padrões espaciais que poderiam passar despercebidos em um layout impresso.
+- **Para o Desenvolvedor GIS:** Ferramentas como **Streamlit** e **Folium** simplificam a criação de dashboards geoespaciais. O desenvolvedor pode focar na lógica de análise de dados e na experiência do usuário (UX), integrando bibliotecas poderosas de visualização em aplicações web rápidas, escaláveis e de fácil manutenção, sem a necessidade de tecnologias complexas de backend.
+
+### Resumo da Implementação
+
+Neste projeto disponível em `app\Home.py`, desenvolvemos uma aplicação web que demonstra as capacidades de visualização geoespacial moderna:
+
+1.  **Integração de Tecnologias:** Uso do **Streamlit** para a interface de usuário e **Folium** para a renderização do mapa base (OpenStreetMap).
+2.  **Dashboard Dinâmico:** Implementação de uma barra lateral (Sidebar) com controles (Checkboxes) que permitem ao usuário alternar a visibilidade de diferentes camadas.
+3.  **Visualização de Geometrias:** Representação prática de objetos do **Shapely** (`Point`, `LineString`, `Polygon`, `MultiPolygon`) diretamente no mapa, convertendo coordenadas geográficas em elementos visuais interativos.
+4.  **UX Didática:** Uso de *tooltips* e ícones personalizados para facilitar a compreensão dos dados apresentados.
+
+
+
+## PROJETO 2: INTRODUÇÃO À GEOMETRIAS
 
 ### 1. Criando um Ponto (Creating a Point)
 
